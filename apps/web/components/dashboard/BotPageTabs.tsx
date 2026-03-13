@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import EmbedTab from "@/components/dashboard/EmbedTab";
+import EmbedCode from "@/components/dashboard/EmbedCode";
 import DocumentUpload from "@/components/dashboard/DocumentUpload";
 import BotTester from "@/components/dashboard/BotTester";
 import BotSettings from "@/components/dashboard/BotSettings";
@@ -103,15 +103,15 @@ export default function BotPageTabs({
 
       {/* Embed tab */}
       {activeTab === "embed" && (
-        <EmbedTab
+        <EmbedCode
           botId={botId}
           embedApiKey={embedApiKey}
           baseUrl={baseUrl}
           botName={botName}
-          widgetColor={widgetColor}
-          widgetPosition={widgetPosition}
-          widgetGreeting={widgetGreeting}
-          widgetPlaceholder={widgetPlaceholder}
+          savedColor={widgetColor}
+          savedPosition={widgetPosition}
+          savedGreeting={widgetGreeting}
+          savedPlaceholder={widgetPlaceholder}
         />
       )}
 
