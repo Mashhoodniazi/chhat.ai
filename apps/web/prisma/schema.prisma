@@ -1,0 +1,76 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  bots      Bot[]
+}
+
+model Bot {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  instructions      String?
+  embedApiKey       String          @unique @default(cuid())
+  widgetColor       String?         @default("#4f46e5")
+  widgetPosition    String?         @default("bottom-right")
+  widgetGreeting    String?
+  widgetPlaceholder String?         @default("Ask a question...")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  documents         Document[]
+  chunks            DocumentChunk[]
+  conversations     Conversation[]
+}
+
+model Document {
+  id        String          @id @default(cuid())
+  botId     String
+  bot       Bot             @relation(fields: [botId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  status    String          @default("processing")
+  createdAt DateTime        @default(now())
+  chunks    DocumentChunk[]
+}
+
+model DocumentChunk {
+  id         String                       @id @default(cuid())
+  botId      String
+  bot        Bot                          @relation(fields: [botId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document                     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime                     @default(now())
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  botId     String
+  bot       Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+}

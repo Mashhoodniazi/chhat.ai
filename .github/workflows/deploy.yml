@@ -1,0 +1,43 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            set -e
+
+            cd /var/www/chatbot-platform
+
+            echo "Pulling latest code..."
+            git pull origin main
+
+            echo "Copying environment file..."
+            cp /var/www/secrets/.env apps/web/.env
+
+            echo "Building and starting containers..."
+            docker compose -f docker/docker-compose.yml build --no-cache
+            docker compose -f docker/docker-compose.yml up -d
+
+            echo "Running database migrations..."
+            docker exec chatbot-app npx prisma migrate deploy
+
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment complete!"
