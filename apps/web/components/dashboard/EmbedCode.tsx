@@ -372,7 +372,7 @@ export default function EmbedCode({
                       </svg>
                     </div>
                   </div>
-                  <div className="text-[9px] text-center text-slate-400 mt-1.5">Powered by ChatBot AI</div>
+                  <div className="text-[9px] text-center text-slate-400 mt-1.5">Powered by Chaat.ai</div>
                 </div>
               </div>
             )}

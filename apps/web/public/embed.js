@@ -196,7 +196,7 @@
         ></textarea>
         <button type="submit" id="cb-send" aria-label="Send message">${iconSend}</button>
       </form>
-      <div id="cb-powered">Powered by ChatBot AI</div>
+      <div id="cb-powered">Powered by Chaat.ai</div>
     </div>
   `;
   root.appendChild(chatWindow);
