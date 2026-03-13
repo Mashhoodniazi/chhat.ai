@@ -8,6 +8,9 @@ services:
       - "3000"
     env_file:
       - ../apps/web/.env
+    environment:
+      - NEXTAUTH_URL=https://chaat.ai
+      - NODE_ENV=production
     restart: unless-stopped
     depends_on:
       - postgres
