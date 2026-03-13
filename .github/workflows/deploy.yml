@@ -36,7 +36,7 @@ jobs:
             docker compose -f docker/docker-compose.yml up -d
 
             echo "Running database migrations..."
-            docker exec -u root chatbot-app node node_modules/prisma/bin.js migrate deploy
+            docker exec -u root chatbot-app node node_modules/prisma/build/index.js migrate deploy
 
             echo "Cleaning up old images..."
             docker image prune -f
