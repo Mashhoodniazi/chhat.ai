@@ -115,7 +115,14 @@ jobs:
             docker exec -u root chatbot-app node node_modules/prisma/build/index.js migrate deploy
 
             echo "──────────────────────────────────────"
-            echo " Step 7: Health check (60s timeout)"
+            echo " Step 7: Run database seed"
+            echo " (creates admin user if not exists)"
+            echo "──────────────────────────────────────"
+            docker exec -u root chatbot-app sh -c \
+              "[ -f prisma/seed.js ] && node prisma/seed.js || echo 'seed.js not found, skipping'"
+
+            echo "──────────────────────────────────────"
+            echo " Step 8: Health check (60s timeout)"
             echo "──────────────────────────────────────"
             HEALTHY=false
             for i in $(seq 1 12); do
@@ -145,7 +152,7 @@ jobs:
             fi
 
             echo "──────────────────────────────────────"
-            echo " Step 8: Clean up old images"
+            echo " Step 9: Clean up old images"
             echo "──────────────────────────────────────"
             docker image prune -f
 
