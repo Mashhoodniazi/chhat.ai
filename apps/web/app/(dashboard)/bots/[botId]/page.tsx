@@ -120,6 +120,7 @@ export default async function BotDetailPage({ params }: Props) {
           widgetPosition={bot.widgetPosition ?? undefined}
           widgetGreeting={bot.widgetGreeting}
           widgetPlaceholder={bot.widgetPlaceholder ?? undefined}
+          widgetSuggestedQuestions={Array.isArray(bot.widgetSuggestedQuestions) ? bot.widgetSuggestedQuestions as string[] : []}
         />
       </div>
     </div>

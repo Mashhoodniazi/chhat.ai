@@ -42,7 +42,7 @@ export async function PUT(request: Request, { params }: Params) {
     }
 
     const { botId } = await params;
-    const { name, instructions, widgetColor, widgetPosition, widgetGreeting, widgetPlaceholder } = await request.json();
+    const { name, instructions, widgetColor, widgetPosition, widgetGreeting, widgetPlaceholder, widgetSuggestedQuestions } = await request.json();
 
     const existing = await prisma.bot.findFirst({
       where: { id: botId, userId: session.user.id },
@@ -61,6 +61,7 @@ export async function PUT(request: Request, { params }: Params) {
         widgetPosition: widgetPosition !== undefined ? widgetPosition : existing.widgetPosition,
         widgetGreeting: widgetGreeting !== undefined ? widgetGreeting?.trim() || null : existing.widgetGreeting,
         widgetPlaceholder: widgetPlaceholder !== undefined ? widgetPlaceholder?.trim() || "Ask a question..." : existing.widgetPlaceholder,
+        widgetSuggestedQuestions: widgetSuggestedQuestions !== undefined ? widgetSuggestedQuestions : existing.widgetSuggestedQuestions,
       },
     });
 

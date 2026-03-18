@@ -31,6 +31,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          plan: user.plan as string,
+          role: user.role as string,
         };
       },
     }),
@@ -43,11 +45,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
       }
+      // Always fetch plan fresh from DB so it never gets stale
+      // (fires on sign-in, session refresh, and explicit update calls)
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { plan: true, role: true },
+        });
+        if (dbUser) {
+          token.plan = dbUser.plan;
+          token.role = dbUser.role;
+        }
+      }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.plan = token.plan as string | undefined;
+        session.user.role = token.role as string | undefined;
       }
       return session;
     },

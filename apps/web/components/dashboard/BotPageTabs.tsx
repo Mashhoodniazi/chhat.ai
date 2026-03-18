@@ -5,6 +5,7 @@ import EmbedCode from "@/components/dashboard/EmbedCode";
 import DocumentUpload from "@/components/dashboard/DocumentUpload";
 import BotTester from "@/components/dashboard/BotTester";
 import BotSettings from "@/components/dashboard/BotSettings";
+import SuggestedQuestions from "@/components/dashboard/SuggestedQuestions";
 import TipBox from "@/components/ui/TipBox";
 import type { Document } from "@prisma/client";
 
@@ -20,6 +21,7 @@ interface BotPageTabsProps {
   widgetPosition?: string;
   widgetGreeting?: string | null;
   widgetPlaceholder?: string;
+  widgetSuggestedQuestions?: string[];
 }
 
 const tabs = [
@@ -51,6 +53,15 @@ const tabs = [
     ),
   },
   {
+    id: "faqs",
+    label: "FAQs",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+    ),
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: (
@@ -74,8 +85,10 @@ export default function BotPageTabs({
   widgetPosition,
   widgetGreeting,
   widgetPlaceholder,
+  widgetSuggestedQuestions,
 }: BotPageTabsProps) {
   const [activeTab, setActiveTab] = useState("embed");
+  const [liveQuestions, setLiveQuestions] = useState<string[]>(widgetSuggestedQuestions ?? []);
 
   return (
     <div>
@@ -109,9 +122,10 @@ export default function BotPageTabs({
           baseUrl={baseUrl}
           botName={botName}
           savedColor={widgetColor}
-          savedPosition={widgetPosition}
-          savedGreeting={widgetGreeting}
-          savedPlaceholder={widgetPlaceholder}
+            savedPosition={widgetPosition}
+            savedGreeting={widgetGreeting}
+            savedPlaceholder={widgetPlaceholder}
+            savedSuggestedQuestions={liveQuestions}
         />
       )}
 
@@ -165,6 +179,32 @@ export default function BotPageTabs({
             </div>
           </div>
           <BotTester botId={botId} embedApiKey={embedApiKey} botName={botName} />
+        </div>
+      )}
+
+      {/* FAQs tab */}
+      {activeTab === "faqs" && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900">Suggested Questions</h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Show quick-reply buttons when visitors open the chat widget for the first time.
+              </p>
+            </div>
+          </div>
+          <SuggestedQuestions
+            botId={botId}
+            botName={botName}
+            primaryColor={widgetColor ?? "#4f46e5"}
+            initialQuestions={liveQuestions}
+            onSaved={(saved) => setLiveQuestions(saved)}
+          />
         </div>
       )}
 

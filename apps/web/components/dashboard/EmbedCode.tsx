@@ -11,6 +11,7 @@ interface EmbedCodeProps {
   savedPosition?: string;
   savedGreeting?: string | null;
   savedPlaceholder?: string;
+  savedSuggestedQuestions?: string[];
 }
 
 const PRESET_COLORS = [
@@ -39,6 +40,7 @@ export default function EmbedCode({
   savedPosition,
   savedGreeting,
   savedPlaceholder,
+  savedSuggestedQuestions,
 }: EmbedCodeProps) {
   const [copied, setCopied] = useState(false);
   const [primaryColor, setPrimaryColor] = useState(savedColor ?? "#4f46e5");
@@ -85,6 +87,9 @@ export default function EmbedCode({
 
   // </script> is split to prevent SSR HTML parser from prematurely closing the hydration script tag
   const scriptClose = "<" + "/script>";
+  const filteredQuestions = (savedSuggestedQuestions ?? []).filter((q) => q.trim());
+  const questionsJson = filteredQuestions.length > 0 ? JSON.stringify(filteredQuestions) : null;
+
   const htmlSnippet = [
     "<script>",
     "  window.ChatbotConfig = {",
@@ -94,7 +99,8 @@ export default function EmbedCode({
     `    primaryColor: "${escapeJS(primaryColor)}",`,
     `    position: "${position}",`,
     `    greetingMessage: "${escapeJS(greetingMessage)}",`,
-    `    placeholder: "${escapeJS(placeholder)}"`,
+    `    placeholder: "${escapeJS(placeholder)}"${questionsJson ? "," : ""}`,
+    ...(questionsJson ? [`    suggestedQuestions: ${questionsJson}`] : []),
     "  };",
     scriptClose,
     `<script src="${baseUrl}/embed.js" async>${scriptClose}`,
@@ -113,7 +119,8 @@ export default function EmbedCode({
     `      primaryColor: "${escapeJS(primaryColor)}",`,
     `      position: "${position}",`,
     `      greetingMessage: "${escapeJS(greetingMessage)}",`,
-    `      placeholder: "${escapeJS(placeholder)}"`,
+    `      placeholder: "${escapeJS(placeholder)}"${questionsJson ? "," : ""}`,
+    ...(questionsJson ? [`      suggestedQuestions: ${questionsJson}`] : []),
     "    };",
     "  `}",
     `</Script>`,
@@ -135,7 +142,8 @@ export default function EmbedCode({
     `    primaryColor: "${escapeJS(primaryColor)}",`,
     `    position: "${position}",`,
     `    greetingMessage: "${escapeJS(greetingMessage)}",`,
-    `    placeholder: "${escapeJS(placeholder)}"`,
+    `    placeholder: "${escapeJS(placeholder)}"${questionsJson ? "," : ""}`,
+    ...(questionsJson ? [`    suggestedQuestions: ${questionsJson}`] : []),
     `  };`,
     `  const script = document.createElement('script');`,
     `  script.src = '${baseUrl}/embed.js';`,
@@ -357,6 +365,19 @@ export default function EmbedCode({
                       {greetingMessage || `Hey! I'm ${botName}.`}
                     </div>
                   </div>
+                  {filteredQuestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1 pl-7">
+                      {filteredQuestions.map((q, i) => (
+                        <span
+                          key={i}
+                          className="text-[9px] font-medium px-2 py-1 rounded-full border cursor-pointer transition-all"
+                          style={{ borderColor: primaryColor, color: primaryColor }}
+                        >
+                          {q}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Input */}

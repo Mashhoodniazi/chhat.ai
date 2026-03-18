@@ -9,6 +9,9 @@
   var position = config.position || "bottom-right";
   var greetingMessage = config.greetingMessage || null;
   var placeholder = config.placeholder || "Ask a question...";
+  var suggestedQuestions = Array.isArray(config.suggestedQuestions)
+    ? config.suggestedQuestions.filter(function(q) { return typeof q === "string" && q.trim(); })
+    : [];
 
   if (!botId || !apiKey) {
     console.warn("[ChatBot AI] Missing botId or apiKey in ChatbotConfig.");
@@ -144,6 +147,16 @@
     #cb-send:disabled { opacity: 0.5 !important; cursor: not-allowed !important; pointer-events: none !important; }
     #cb-send svg { width: 18px !important; height: 18px !important; fill: white !important; }
     #cb-powered { text-align: center !important; font-size: 11px !important; color: #9ca3af !important; padding: 6px 0 2px !important; }
+    #cb-suggestions { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; padding: 4px 16px 12px !important; }
+    .cb-suggestion-btn {
+      all: unset !important;
+      border: 1.5px solid ${primaryColor} !important; color: ${primaryColor} !important;
+      border-radius: 20px !important; padding: 6px 14px !important;
+      font-size: 13px !important; line-height: 1.4 !important;
+      cursor: pointer !important; pointer-events: auto !important;
+      transition: background 0.15s !important; white-space: nowrap !important;
+    }
+    .cb-suggestion-btn:hover { background: ${hexToRgba(primaryColor, 0.08)} !important; }
     @keyframes cbFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     @keyframes cbBounce {
       0%, 80%, 100% { transform: translateY(0); }
@@ -215,6 +228,9 @@
     if (isOpen && messagesEl.children.length === 0) {
       var greeting = greetingMessage || ("Hey! I\u2019m " + botName + ". What can I help you with today?");
       addBotMessage(greeting);
+      if (suggestedQuestions.length > 0) {
+        addSuggestionPills(suggestedQuestions);
+      }
     }
     if (isOpen) {
       setTimeout(function () {
@@ -264,12 +280,35 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  function addSuggestionPills(questions) {
+    var container = document.createElement("div");
+    container.id = "cb-suggestions";
+    questions.forEach(function(q) {
+      var btn = document.createElement("button");
+      btn.className = "cb-suggestion-btn";
+      btn.textContent = q;
+      btn.addEventListener("click", function() {
+        var el = document.getElementById("cb-suggestions");
+        if (el) el.remove();
+        inputEl.value = q;
+        inputEl.style.height = "auto";
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + "px";
+        formEl.dispatchEvent(new Event("submit"));
+      });
+      container.appendChild(btn);
+    });
+    messagesEl.appendChild(container);
+    scrollToBottom();
+  }
+
   function setInputDisabled(disabled) {
     inputEl.disabled = disabled;
     sendBtn.disabled = disabled;
   }
 
   async function sendMessage(message) {
+    var suggestionsEl = document.getElementById("cb-suggestions");
+    if (suggestionsEl) suggestionsEl.remove();
     addUserMessage(message);
     setInputDisabled(true);
     addTypingIndicator();

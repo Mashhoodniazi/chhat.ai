@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import LandingNavbar from "@/components/landing/Navbar";
 
 const features = [
   {
@@ -94,28 +95,7 @@ const steps = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-slate-100/80">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <Image src="/logo.png" alt="Chaat.ai" width={360} height={96} className="h-24 w-auto object-contain" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-4 py-2 rounded-xl hover:bg-slate-50"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl transition-all shadow-sm shadow-violet-200"
-            >
-              Get Started Free
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <LandingNavbar />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -187,7 +167,7 @@ export default function LandingPage() {
 
             {/* Right: Chat Demo Mockup */}
             <div className="flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-sm">
+              <div className="relative w-full max-w-sm py-4 px-4 lg:px-0">
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-200 to-indigo-200 rounded-3xl blur-2xl opacity-30 scale-110" />
 
@@ -299,21 +279,37 @@ export default function LandingPage() {
       </section>
 
       {/* Social proof bar */}
-      <div className="border-y border-slate-100 bg-slate-50/50 py-5">
-        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
-          <p className="text-sm text-slate-500 font-medium">Perfect for teams who want to</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {["Stop answering repeat questions", "Support customers 24/7", "Scale without hiring more staff", "Launch a docs bot in minutes"].map((tag) => (
-              <span key={tag} className="bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-full">
-                {tag}
-              </span>
+      <div className="border-y border-slate-100 bg-slate-50/50 py-6">
+        <div className="max-w-5xl mx-auto px-6">
+          {/* Stats */}
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 mb-5">
+            {[
+              { value: "1,200+", label: "Bots created" },
+              { value: "50,000+", label: "Conversations handled" },
+              { value: "< 60 sec", label: "Average setup time" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-lg font-bold text-slate-900">{stat.value}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
+              </div>
             ))}
+          </div>
+          {/* Benefit tags */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 text-center">
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Perfect for</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {["Stop answering repeat questions", "Support customers 24/7", "Scale without hiring", "Launch in minutes"].map((tag) => (
+                <span key={tag} className="bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-full">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Features */}
-      <section className="py-24">
+      <section id="features" className="py-24">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
@@ -348,7 +344,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 bg-slate-50/70">
+      <section id="how-it-works" className="py-24 bg-slate-50/70">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-3">
@@ -384,12 +380,15 @@ export default function LandingPage() {
       </section>
 
       {/* Use cases strip */}
-      <section className="py-20">
+      <section id="use-cases" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight mb-3">
               Built for any team with a website
             </h2>
+            <p className="text-slate-500 text-base">
+              Whatever your industry, your customers have questions. Your bot has answers.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
@@ -397,22 +396,34 @@ export default function LandingPage() {
                 emoji: "🛒",
                 title: "E-commerce",
                 desc: "Answer questions about shipping, returns, sizing, and product details — without your team lifting a finger.",
+                cta: "Build a store bot",
               },
               {
                 emoji: "🖥️",
                 title: "SaaS & Tech",
                 desc: "Turn your help docs into an interactive assistant. Onboard users faster and reduce support tickets instantly.",
+                cta: "Build a docs bot",
               },
               {
                 emoji: "🏢",
                 title: "Agencies & Consultants",
                 desc: "Build branded bots for clients in minutes. Deliver a premium AI support experience as part of your offering.",
+                cta: "Build a client bot",
               },
             ].map((uc) => (
-              <div key={uc.title} className="bg-gradient-to-b from-slate-50 to-white border border-slate-100 rounded-2xl p-7">
+              <div key={uc.title} className="group bg-gradient-to-b from-slate-50 to-white border border-slate-100 rounded-2xl p-7 flex flex-col hover:border-violet-100 hover:shadow-sm transition-all duration-200">
                 <div className="text-3xl mb-4">{uc.emoji}</div>
                 <h3 className="font-semibold text-slate-900 mb-2">{uc.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{uc.desc}</p>
+                <p className="text-slate-500 text-sm leading-relaxed flex-1">{uc.desc}</p>
+                <Link
+                  href="/signup"
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700 transition-colors"
+                >
+                  {uc.cta}
+                  <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
               </div>
             ))}
           </div>
@@ -456,12 +467,16 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Chaat.ai" width={270} height={72} className="h-[72px] w-auto object-contain" />
+          <div className="flex items-center gap-3">
+            <Image src="/logo.png" alt="Chaat.ai" width={360} height={96} className="w-36 h-auto object-contain" />
             <span className="text-slate-200">·</span>
-            <span>© 2025 All rights reserved.</span>
+            <span>© 2026 All rights reserved.</span>
           </div>
-          <p className="text-slate-400">AI chatbots trained on your content.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/#features" className="hover:text-slate-600 transition-colors">Features</Link>
+            <Link href="/pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
+            <Link href="/login" className="hover:text-slate-600 transition-colors">Sign in</Link>
+          </div>
         </div>
       </footer>
     </div>
