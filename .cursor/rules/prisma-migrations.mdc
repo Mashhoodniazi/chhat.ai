@@ -1,48 +1,57 @@
 ---
 description: Safe deployment workflow for schema, seeder, and code changes
 globs: apps/web/prisma/**
-alwaysApply: false
+alwaysApply: true
 ---
 
-# Safe Deployment Workflow
+# Prisma Migration Rules — ALWAYS Follow
 
-## Schema Changes → ALWAYS create a migration
+## RULE #1: Every schema change MUST have a migration file
+
+**No exceptions.** If you add, remove, or rename any field, model, or enum in `schema.prisma`, you MUST create a migration file before committing.
 
 ```bash
 cd apps/web
-npx prisma migrate dev --name <describe-change>
-# e.g. npx prisma migrate dev --name add_widget_suggested_questions
-git add prisma/schema.prisma prisma/migrations/
-git commit -m "feat: <describe change>"
+npx prisma migrate dev --name <describe-your-change>
 ```
 
-**CI/CD will block deployment** if schema.prisma changes without a migration file.
+Then commit BOTH files together — never commit schema.prisma alone:
 
-## New Seed Data → commit the seeder file
+```bash
+git add prisma/schema.prisma prisma/migrations/
+git commit -m "feat: add widgetSuggestedQuestions to Bot"
+```
 
-If you change `prisma/seed.ts` or add seed data, commit it. The deploy pipeline runs the seeder automatically after migrations.
+## RULE #2: Never push schema.prisma without a migration
 
-## Renaming or Removing Columns
+The CI/CD pipeline will **block the deployment** if `schema.prisma` changed but no migration file was added in the same commit. You will get this error:
 
-These are **destructive changes** — follow this order:
-1. Add the new column (deploy)
-2. Migrate data (deploy)
-3. Remove the old column (deploy)
+```
+❌ ERROR: schema.prisma was changed but no migration file was committed.
+   Fix: cd apps/web && npx prisma migrate dev --name <describe-your-change>
+```
 
-Never rename or drop a column in one deploy — it will crash the running app.
+## RULE #3: Renaming or removing columns = 3 separate deploys
 
-## Environment Variable Changes
+Never rename or drop a column in one deploy — it crashes the running app.
 
-If you add a new `process.env.XYZ` to the code:
-1. Add it to `/var/www/secrets/.env` on the Droplet
+| Deploy | Action |
+|--------|--------|
+| 1st | Add the new column |
+| 2nd | Migrate existing data to new column |
+| 3rd | Remove the old column |
+
+## RULE #4: New env variables need server update too
+
+If you add `process.env.NEW_VAR` to the code:
+1. Add it to `/var/www/secrets/.env` on the Droplet **before** pushing
 2. Add it to `.env.example` in the repo
-3. Never commit real secrets to git
+3. Never commit real secret values to git
 
-## What the CI/CD Pipeline Does
+## What the CI/CD pipeline checks on every push
 
-| Step | What happens |
-|------|-------------|
-| TypeScript check | Fails if type errors exist |
-| Migration check | Fails if schema changed without migration |
-| Migrations run BEFORE app restarts | Safe additive deploys |
-| Health check `/api/health` | Rolls back output if app crashes after deploy |
+| Check | Blocks deploy if... |
+|-------|-------------------|
+| TypeScript | Any type errors exist |
+| Migration guard | schema.prisma changed without a new migration file |
+| Health check | App returns non-200 from `/api/health` after deploy |
