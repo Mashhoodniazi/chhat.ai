@@ -7,6 +7,7 @@ interface EmbedCodeProps {
   embedApiKey: string;
   baseUrl: string;
   botName: string;
+  hideBranding?: boolean;
   savedColor?: string;
   savedPosition?: string;
   savedGreeting?: string | null;
@@ -36,6 +37,7 @@ export default function EmbedCode({
   embedApiKey,
   baseUrl,
   botName,
+  hideBranding = false,
   savedColor,
   savedPosition,
   savedGreeting,
@@ -393,7 +395,9 @@ export default function EmbedCode({
                       </svg>
                     </div>
                   </div>
-                  <div className="text-[9px] text-center text-slate-400 mt-1.5">Powered by Chaat.ai</div>
+                  {!hideBranding && (
+                    <div className="text-[9px] text-center text-slate-400 mt-1.5">Powered by Chaat.ai</div>
+                  )}
                 </div>
               </div>
             )}

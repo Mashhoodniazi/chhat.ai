@@ -14,6 +14,7 @@ interface BotPageTabsProps {
   embedApiKey: string;
   baseUrl: string;
   botName: string;
+  hideBranding?: boolean;
   documents: Document[];
   initialName: string;
   initialInstructions: string;
@@ -78,6 +79,7 @@ export default function BotPageTabs({
   embedApiKey,
   baseUrl,
   botName,
+  hideBranding = false,
   documents,
   initialName,
   initialInstructions,
@@ -121,11 +123,12 @@ export default function BotPageTabs({
           embedApiKey={embedApiKey}
           baseUrl={baseUrl}
           botName={botName}
+          hideBranding={hideBranding}
           savedColor={widgetColor}
-            savedPosition={widgetPosition}
-            savedGreeting={widgetGreeting}
-            savedPlaceholder={widgetPlaceholder}
-            savedSuggestedQuestions={liveQuestions}
+          savedPosition={widgetPosition}
+          savedGreeting={widgetGreeting}
+          savedPlaceholder={widgetPlaceholder}
+          savedSuggestedQuestions={liveQuestions}
         />
       )}
 

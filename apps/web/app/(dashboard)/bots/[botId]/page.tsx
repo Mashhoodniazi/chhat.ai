@@ -30,15 +30,23 @@ export default async function BotDetailPage({ params }: Props) {
   const proto = headersList.get("x-forwarded-proto") ?? "http";
   const baseUrl = `${proto}://${host}`;
 
-  const bot = await prisma.bot.findFirst({
-    where: { id: botId, userId: session.user.id },
-    include: {
-      documents: { orderBy: { createdAt: "desc" } },
-      _count: { select: { conversations: true, chunks: true } },
-    },
-  });
+  const [bot, dbUser] = await Promise.all([
+    prisma.bot.findFirst({
+      where: { id: botId, userId: session.user.id },
+      include: {
+        documents: { orderBy: { createdAt: "desc" } },
+        _count: { select: { conversations: true, chunks: true } },
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true },
+    }),
+  ]);
 
   if (!bot) notFound();
+
+  const hideBranding = dbUser?.plan === "BUSINESS";
 
   const color = BOT_COLORS[bot.name.charCodeAt(0) % BOT_COLORS.length];
 
@@ -113,6 +121,7 @@ export default async function BotDetailPage({ params }: Props) {
           embedApiKey={bot.embedApiKey}
           baseUrl={baseUrl}
           botName={bot.name}
+          hideBranding={hideBranding}
           documents={bot.documents}
           initialName={bot.name}
           initialInstructions={bot.instructions || ""}

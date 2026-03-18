@@ -31,6 +31,7 @@
   var isOpen = false;
   var isRight = position !== "bottom-left";
   var hPos = isRight ? "right" : "left";
+  var hideBranding = false;
 
   function hexToRgba(hex, alpha) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -373,6 +374,18 @@
       inputEl.focus();
     }
   }
+
+  // Fetch plan config from server to decide whether to show branding
+  fetch(origin + "/api/widget/" + botId + "/config?apiKey=" + encodeURIComponent(apiKey))
+    .then(function(res) { return res.ok ? res.json() : null; })
+    .then(function(data) {
+      if (data && data.hideBranding) {
+        hideBranding = true;
+        var powered = document.getElementById("cb-powered");
+        if (powered) powered.style.display = "none";
+      }
+    })
+    .catch(function() {});
 
   toggleBtn.addEventListener("click", toggleChat);
 

@@ -12,6 +12,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY apps/web .
 RUN npx prisma generate
 RUN npm run build
+# Bundle the seed script into a self-contained JS file (bcryptjs inlined, @prisma/client external)
+RUN npx esbuild prisma/seed.ts --bundle --platform=node --external:@prisma/client --outfile=prisma/seed.js
 
 FROM base AS runner
 WORKDIR /app
@@ -26,6 +28,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+# Copy compiled seed script (bundled, no tsx needed at runtime)
+COPY --from=builder /app/prisma/seed.js ./prisma/seed.js
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma

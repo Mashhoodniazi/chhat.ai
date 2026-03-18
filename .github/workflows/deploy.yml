@@ -104,7 +104,8 @@ jobs:
             echo "──────────────────────────────────────"
             echo " Step 5: Start containers"
             echo "──────────────────────────────────────"
-            docker compose -f docker/docker-compose.yml up -d
+            docker compose -f docker/docker-compose.yml down --remove-orphans || true
+            docker compose -f docker/docker-compose.yml up -d --force-recreate
 
             echo "──────────────────────────────────────"
             echo " Step 6: Run migrations on new image"
