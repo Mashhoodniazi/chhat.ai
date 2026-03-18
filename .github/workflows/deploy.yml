@@ -118,10 +118,17 @@ jobs:
             echo "──────────────────────────────────────"
             HEALTHY=false
             for i in $(seq 1 12); do
-              HTTP_CODE=$(docker exec chatbot-app wget -q -O- http://localhost:3000/api/health 2>/dev/null || echo "")
-              if echo "$HTTP_CODE" | grep -q '"status":"ok"'; then
+              RESPONSE=$(docker exec chatbot-app node -e "
+                const http = require('http');
+                http.get('http://localhost:3000/api/health', (res) => {
+                  let d = '';
+                  res.on('data', c => d += c);
+                  res.on('end', () => { console.log(d); process.exit(res.statusCode === 200 ? 0 : 1); });
+                }).on('error', (e) => { console.error(e.message); process.exit(1); });
+              " 2>/dev/null || echo "")
+              if echo "$RESPONSE" | grep -q '"status":"ok"'; then
                 HEALTHY=true
-                echo "✅ App is healthy after ${i}x5s = $((i*5))s"
+                echo "✅ App is healthy after $((i*5))s"
                 break
               fi
               echo "   Waiting... ($i/12)"
