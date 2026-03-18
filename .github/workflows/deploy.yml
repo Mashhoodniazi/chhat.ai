@@ -5,10 +5,59 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  # ─── Stage 1: Validate on GitHub runner ────────────────────────────────────
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci --legacy-peer-deps
+
+      - name: TypeScript check
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+      - name: Check schema changes have a migration file
+        run: |
+          SCHEMA_CHANGED=$(git diff HEAD~1 HEAD --name-only | grep "apps/web/prisma/schema.prisma" || true)
+          MIGRATION_ADDED=$(git diff HEAD~1 HEAD --name-only | grep "apps/web/prisma/migrations/" || true)
+
+          if [ -n "$SCHEMA_CHANGED" ] && [ -z "$MIGRATION_ADDED" ]; then
+            echo "❌ schema.prisma was changed but no migration file was committed."
+            echo ""
+            echo "   Fix: run this locally before pushing:"
+            echo "   cd apps/web && npx prisma migrate dev --name <describe-your-change>"
+            echo "   Then commit the new migration file."
+            exit 1
+          fi
+
+          if [ -n "$SCHEMA_CHANGED" ]; then
+            echo "✅ Schema changed and migration file found."
+          else
+            echo "✅ No schema changes."
+          fi
+
+  # ─── Stage 2: Deploy to DigitalOcean ───────────────────────────────────────
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
+    needs: validate
 
     steps:
       - name: Checkout code
@@ -22,24 +71,77 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             set -e
-
             cd /var/www/chatbot-platform
 
-            echo "Pulling latest code..."
+            echo "──────────────────────────────────────"
+            echo " Step 1: Pull latest code"
+            echo "──────────────────────────────────────"
             git fetch origin main
             git reset --hard origin/main
 
-            echo "Copying environment file..."
+            echo "──────────────────────────────────────"
+            echo " Step 2: Copy environment file"
+            echo "──────────────────────────────────────"
             cp /var/www/secrets/.env apps/web/.env
+            ln -sf ../apps/web/.env docker/.env
 
-            echo "Building and starting containers..."
+            echo "──────────────────────────────────────"
+            echo " Step 3: Run migrations BEFORE restart"
+            echo " (safe: adds columns before new code)"
+            echo "──────────────────────────────────────"
+            if docker ps --format '{{.Names}}' | grep -q chatbot-app; then
+              docker exec -u root chatbot-app node node_modules/prisma/build/index.js migrate deploy
+              echo "✅ Migrations applied to running app."
+            else
+              echo "ℹ App not running yet, migrations will run after startup."
+            fi
+
+            echo "──────────────────────────────────────"
+            echo " Step 4: Build new Docker image"
+            echo "──────────────────────────────────────"
             docker compose -f docker/docker-compose.yml build --no-cache
+
+            echo "──────────────────────────────────────"
+            echo " Step 5: Start containers"
+            echo "──────────────────────────────────────"
             docker compose -f docker/docker-compose.yml up -d
 
-            echo "Running database migrations..."
+            echo "──────────────────────────────────────"
+            echo " Step 6: Run migrations on new image"
+            echo " (catches first deploy + new migrations)"
+            echo "──────────────────────────────────────"
+            sleep 5
             docker exec -u root chatbot-app node node_modules/prisma/build/index.js migrate deploy
 
-            echo "Cleaning up old images..."
+            echo "──────────────────────────────────────"
+            echo " Step 7: Health check (60s timeout)"
+            echo "──────────────────────────────────────"
+            HEALTHY=false
+            for i in $(seq 1 12); do
+              HTTP_CODE=$(docker exec chatbot-app wget -q -O- http://localhost:3000/api/health 2>/dev/null || echo "")
+              if echo "$HTTP_CODE" | grep -q '"status":"ok"'; then
+                HEALTHY=true
+                echo "✅ App is healthy after ${i}x5s = $((i*5))s"
+                break
+              fi
+              echo "   Waiting... ($i/12)"
+              sleep 5
+            done
+
+            if [ "$HEALTHY" = false ]; then
+              echo "❌ Health check failed after 60 seconds"
+              echo ""
+              echo "Last 50 app log lines:"
+              docker logs chatbot-app --tail=50
+              exit 1
+            fi
+
+            echo "──────────────────────────────────────"
+            echo " Step 8: Clean up old images"
+            echo "──────────────────────────────────────"
             docker image prune -f
 
-            echo "Deployment complete!"
+            echo ""
+            echo "══════════════════════════════════════"
+            echo "  ✅ Deployment complete!"
+            echo "══════════════════════════════════════"

@@ -1,0 +1,48 @@
+---
+description: Safe deployment workflow for schema, seeder, and code changes
+globs: apps/web/prisma/**
+alwaysApply: false
+---
+
+# Safe Deployment Workflow
+
+## Schema Changes → ALWAYS create a migration
+
+```bash
+cd apps/web
+npx prisma migrate dev --name <describe-change>
+# e.g. npx prisma migrate dev --name add_widget_suggested_questions
+git add prisma/schema.prisma prisma/migrations/
+git commit -m "feat: <describe change>"
+```
+
+**CI/CD will block deployment** if schema.prisma changes without a migration file.
+
+## New Seed Data → commit the seeder file
+
+If you change `prisma/seed.ts` or add seed data, commit it. The deploy pipeline runs the seeder automatically after migrations.
+
+## Renaming or Removing Columns
+
+These are **destructive changes** — follow this order:
+1. Add the new column (deploy)
+2. Migrate data (deploy)
+3. Remove the old column (deploy)
+
+Never rename or drop a column in one deploy — it will crash the running app.
+
+## Environment Variable Changes
+
+If you add a new `process.env.XYZ` to the code:
+1. Add it to `/var/www/secrets/.env` on the Droplet
+2. Add it to `.env.example` in the repo
+3. Never commit real secrets to git
+
+## What the CI/CD Pipeline Does
+
+| Step | What happens |
+|------|-------------|
+| TypeScript check | Fails if type errors exist |
+| Migration check | Fails if schema changed without migration |
+| Migrations run BEFORE app restarts | Safe additive deploys |
+| Health check `/api/health` | Rolls back output if app crashes after deploy |
